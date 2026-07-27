@@ -1,0 +1,43 @@
+
+clear; clc;
+
+
+T = 1000;            % Total simulation time (ms)
+dt = 1;              % Time step (ms)
+time = 0:dt:T;
+
+V_rest = -70;        % RMP (mV)
+V_thresh = -50;      % Threshold Potential (mV)
+V_reset = -65;       % Reset potential (mV)
+tau = 20;            % Membrane time constant (ms)
+R = 10;              % Membrane resistance (mOhm)
+
+I = 2.5;             % Injected input current (nA)
+
+
+V = zeros(size(time));
+V(1) = V_rest;
+spike_times = [];
+
+for i = 1:length(time)-1
+    
+    if V(i) >= V_thresh
+        V(i) = 0;              
+        V(i+1) = V_reset;          
+        spike_times(end+1) = time(i); 
+    else
+        
+        dV = ((-(V(i) - V_rest)) + (R * I)) / tau;
+        V(i+1) = V(i) + dV * dt;
+    end
+end
+
+
+figure;
+plot(time, V, 'b-', 'LineWidth', 1.5);
+hold on;
+title(['Neuronal Firing Response for Input Current I = ', num2str(I), ' nA']);
+xlabel('Time (ms)');
+ylabel('Membrane Potential (mV)');
+ylim([-80, 20]);
+grid on;
