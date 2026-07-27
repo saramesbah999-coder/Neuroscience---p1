@@ -1,0 +1,76 @@
+% Hodgkin-Huxley Model
+clear; clc;
+
+
+T = 50;              % Total simulation time (ms)
+dt = 0.01;           % Time step (ms)
+time = 0:dt:T;
+
+C_m = 1.0;           % Membrane capacitance (uF/cm^2)
+g_Na = 120.0;        % Max sodium conductance (mS/cm^2)
+g_K = 36.0;          % Max potassium conductance (mS/cm^2)
+g_L = 0.3;           % Max leak conductance (mS/cm^2)
+
+E_Na = 50.0;         % Sodium reversal potential (mV)
+E_K = -77.0;         % Potassium reversal potential (mV)
+E_L = -54.387;       % Leak reversal potential (mV)
+
+
+V = -65.0;           % Initial membrane potential (mV)
+
+alpha_m = 0.1 * (V + 40) / (1 - exp(-(V + 40) / 10));
+beta_m  = 4.0 * exp(-(V + 65) / 18);
+m = alpha_m / (alpha_m + beta_m);
+
+alpha_h = 0.07 * exp(-(V + 65) / 20);
+beta_h  = 1.0 / (1 + exp(-(V + 35) / 10));
+h = alpha_h / (alpha_h + beta_h);
+
+alpha_n = 0.01 * (V + 55) / (1 - exp(-(V + 55) / 10));
+beta_n  = 0.125 * exp(-(V + 65) / 80);
+n = alpha_n / (alpha_n + beta_n);
+
+V_rec = zeros(size(time));
+
+
+for i = 1:length(time)
+    t = time(i);
+    
+    % Apply a 10 uA/cm^2 stimulus current between t = 10ms and 25ms
+    if t >= 10 && t <= 25
+        I_inj = 10.0;
+    else
+        I_inj = 0.0;
+    end
+    
+    
+    alpha_m = 0.1 * (V + 40) / (1 - exp(-(V + 40) / 10));
+    beta_m  = 4.0 * exp(-(V + 65) / 18);
+    alpha_h = 0.07 * exp(-(V + 65) / 20);
+    beta_h  = 1.0 / (1 + exp(-(V + 35) / 10));
+    alpha_n = 0.01 * (V + 55) / (1 - exp(-(V + 55) / 10));
+    beta_n  = 0.125 * exp(-(V + 65) / 80);
+    
+    
+    I_Na = g_Na * (m^3) * h * (V - E_Na);
+    I_K  = g_K * (n^4) * (V - E_K);
+    I_L  = g_L * (V - E_L);
+    
+    
+        dV = (I_inj - (I_Na + I_K + I_L)) / C_m;
+    
+    
+    V = V + dV * dt;
+    m = m + (alpha_m * (1 - m) - beta_m * m) * dt;
+    h = h + (alpha_h * (1 - h) - beta_h * h) * dt;
+    n = n + (alpha_n * (1 - n) - beta_n * n) * dt;
+    
+    V_rec(i) = V;
+end
+
+figure;
+plot(time, V_rec, 'r-', 'LineWidth', 1.5);
+title('Hodgkin-Huxley Nerve Axon Action Potential Simulation');
+xlabel('Time (ms)');
+ylabel('Membrane Potential (mV)');
+grid on;
